@@ -1,104 +1,88 @@
 import tkinter as tk
 import random
+# 外部ファイル iching_data.py から 64卦データを読み込む
+try:
+    from iching_data import HEXAGRAM_DATA
+except ImportError:
+    # データファイルがない場合のエラーハンドリング
+    HEXAGRAM_DATA = {}
 
 class IchingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("八卦・六十四卦 決定版")
-        self.root.geometry("500x700")
-        self.root.configure(bg="#1a1a2e") # 深みのある紺色
+        self.root.title("本格易占い - 運勢鑑定版")
+        self.root.geometry("500x800")
+        self.root.configure(bg="#1a1a2e") # 深みのあるダークブルー
 
-        # 八卦の定義
+        # 八卦（小成卦）の定義
         self.trigrams = {
             (1, 1, 1): "天", (0, 0, 0): "地", (1, 0, 0): "雷", (0, 1, 1): "風",
             (0, 1, 0): "水", (1, 0, 1): "火", (0, 0, 1): "山", (1, 1, 0): "澤"
         }
+        
+        self.hexagrams = HEXAGRAM_DATA
 
-        # 64卦データ (外卦, 内卦)
-        self.hexagrams = {
-            ("天","天"): {"name": "1.乾為天", "desc": "【大吉】 龍が天に昇る勢い。強い意志で突き進めば願いは叶います。"},
-            ("地","地"): {"name": "2.坤為地", "desc": "【吉】 従順さが鍵。裏方に徹し、周囲を支えることで運が開けます。"},
-            ("水","雷"): {"name": "3.水雷屯", "desc": "【難】 芽吹き前の苦しみ。今は焦らず、準備と忍耐の時です。"},
-            ("山","水"): {"name": "4.山水蒙", "desc": "【教育】 先が見えない未熟な状態。謙虚に教えを請うことが吉です。"},
-            ("水","天"): {"name": "5.水天需", "desc": "【待機】 時を待つ楽しみ。準備を整えて待てば恵みの雨が降ります。"},
-            ("天","水"): {"name": "6.天水訟", "desc": "【争い】 意見の対立に注意。意地を張らず、妥協点を見つけましょう。"},
-            ("地","水"): {"name": "7.地水師", "desc": "【統率】 規律とリーダーシップが重要。正しい目的があれば人が集まります。"},
-            ("水","地"): {"name": "8.水地比", "desc": "【和合】 人と親しみ助け合う時。遅れるとチャンスを逃します。"},
-            ("風","天"): {"name": "9.風天小畜", "desc": "【小止】 力不足で今は足止め。小さな徳を積み、力を蓄えましょう。"},
-            ("天","澤"): {"name": "10.天澤履", "desc": "【礼儀】 虎の尾を踏むような危うさ。礼節を守れば災いは避けられます。"},
-            ("地","天"): {"name": "11.地天泰", "desc": "【安泰】 天地が交わり万事円満。平和で順調な時期を楽しみましょう。"},
-            ("天","地"): {"name": "12.天地否", "desc": "【閉塞】 意思が通じない停滞期。無理に動かず静観するのが賢明です。"},
-            ("天","火"): {"name": "13.天火同人", "desc": "【協力】 志を同じくする仲間。外に出て広く人と交流すると吉です。"},
-            ("火","天"): {"name": "14.火天大有", "desc": "【盛大】 太陽が天を照らす最高運。謙虚さを忘れなければ繁栄します。"},
-            ("地","山"): {"name": "15.地山謙", "desc": "【謙譲】 才能を隠して謙虚に。実力があっても威張らないのが成功の秘訣。"},
-            ("雷","地"): {"name": "16.雷地予", "desc": "【歓喜】 喜びと希望。計画を実行に移す好機ですが、油断は大敵。"},
-            ("澤","雷"): {"name": "17.澤雷随", "desc": "【従順】 時の流れや人の意見に従う時。我を通さない方がうまくいきます。"},
-            ("山","風"): {"name": "18.山風蠱", "desc": "【腐敗】 内部の淀みを一新すべき時。勇気を持って改革に乗り出しましょう。"},
-            ("地","澤"): {"name": "19.地澤臨", "desc": "【君臨】 運気が上昇中。希望を持って積極的に進むべき好機です。"},
-            ("風","地"): {"name": "20.風地観", "desc": "【観察】 動くよりもじっくり観察。本質を見極めることで道が見えます。"},
-            ("火","雷"): {"name": "21.火雷噬嗑", "desc": "【障害排除】 邪魔者を噛み砕く強い意志が必要。毅然とした態度で解決を。"},
-            ("山","火"): {"name": "22.山火賁", "desc": "【装飾】 見た目の美しさと内面の充実。見栄を張らず中身を磨いて吉。"},
-            ("山","地"): {"name": "23.山地剥", "desc": "【剥落】 崩れ落ちる時期。今は耐えるしかありません。慎重に、慎重に。"},
-            ("地","雷"): {"name": "24.地雷復", "desc": "【一陽来復】 運気が戻り始める兆し。焦らず一歩ずつ再出発しましょう。"},
-            ("天","雷"): {"name": "25.天雷无妄", "desc": "【自然体】 無欲で自然の流れに任せる。下心を持つと災いを招きます。"},
-            ("山","天"): {"name": "26.山天大畜", "desc": "【大蓄】 大きなエネルギーの蓄積。今は力を蓄え、好機を待ちましょう。"},
-            ("山","雷"): {"name": "27.山雷頤", "desc": "【養生】 言葉と食事に注意。自分と他人を正しく養うことが大切です。"},
-            ("澤","風"): {"name": "28.澤風大過", "desc": "【過重】 荷が重すぎる状態。抜本的な対策と、無理をしない勇気を。"},
-            ("水","水"): {"name": "29.坎為水", "desc": "【険難】 幾重もの困難。誠実さを失わず、流れに身を任せれば道が開けます。"},
-            ("火","火"): {"name": "30.離為火", "desc": "【明晰】 太陽のような情熱と知恵。依存先を正しく選ぶことが鍵です。"},
-            ("澤","山"): {"name": "31.澤山咸", "desc": "【感応】 素直な心での交流。恋愛や対人関係で良い反応が得られます。"},
-            ("雷","風"): {"name": "32.雷風恒", "desc": "【継続】 変わらぬ信念。地道にコツコツと続けることが大きな成果へ。"},
-            ("天","山"): {"name": "33.天山遁", "desc": "【後退】 賢く身を引く。引き際を美しくすることで、将来の道を守ります。"},
-            ("雷","天"): {"name": "34.雷天大壮", "desc": "【猛進】 勢いが強い時。力に任せて突き進むと失敗します。自制心を。"},
-            ("火","地"): {"name": "35.火地晋", "desc": "【進歩】 日が昇る勢い。実力が認められ、周囲からの協力も得られます。"},
-            ("地","火"): {"name": "36.地火明夷", "desc": "【受難】 才能を隠して耐える。今は目立たず、嵐が過ぎるのを待ちましょう。"},
-            ("風","火"): {"name": "37.風火家政", "desc": "【家庭】 足元を固める。身近な人との絆を大切にすることで運が安定します。"},
-            ("火","澤"): {"name": "38.火澤睽", "desc": "【背反】 意見の食い違い。違いを認めつつ、小事から片付けましょう。"},
-            ("水","山"): {"name": "39.水山蹇", "desc": "【足止め】 前に難所、後ろに崖。無理に進まず、一歩引いて賢者に相談を。"},
-            ("雷","水"): {"name": "40.雷水解", "desc": "【解消】 悩みや束縛からの解放。これまでのわだかまりが解け始めます。"},
-            ("山","澤"): {"name": "41.山澤損", "desc": "【奉仕】 先に与えて後で得る。目先の損を惜しまず、誠意を尽くして吉。"},
-            ("風","雷"): {"name": "42.風雷益", "desc": "【増益】 勢いに乗って進むべき。公益のために動けば大きな利益となります。"},
-            ("澤","天"): {"name": "43.澤天夬", "desc": "【決断】 断固とした処置。迷いを捨てて決行する時ですが、冷静さを。"},
-            ("天","風"): {"name": "44.天風姤", "desc": "【遭遇】 思いがけない出会い。誘惑や安易な妥協には警戒が必要です。"},
-            ("澤","地"): {"name": "45.澤地萃", "desc": "【集結】 人や物が集まる繁栄の時。中心人物としての誠実さが問われます。"},
-            ("地","風"): {"name": "46.地風升", "desc": "【上昇】 階段を上るように着実に。努力が実を結び、高い地位へと進めます。"},
-            ("澤","水"): {"name": "47.澤水困", "desc": "【困窮】 試練の時。言葉は通じませんが、志を変えなければ道はあります。"},
-            ("水","風"): {"name": "48.水風井", "desc": "【不変】 尽きることのない知恵。地味な努力を積み上げ、土台を守りましょう。"},
-            ("澤","火"): {"name": "49.澤火革", "desc": "【変革】 古いものを捨て新しい道へ。タイミングを見計らって断行して吉。"},
-            ("火","風"): {"name": "50.火風鼎", "desc": "【安定】 三本足の安定感。協力者と協力して新しい価値を作り上げましょう。"},
-            ("雷","雷"): {"name": "51.震為雷", "desc": "【驚愕】 突然の衝撃。驚いても落ち着きを失わなければ、福に転じます。"},
-            ("山","山"): {"name": "52.艮為山", "desc": "【静止】 動かざること山の如し。止まるべき時に止まる勇気が、災いを防ぎます。"},
-            ("風","山"): {"name": "53.風山漸", "desc": "【漸進】 急がば回れ。順序正しく進めることで、確実な幸せを掴めます。"},
-            ("雷","澤"): {"name": "54.雷澤帰妹", "desc": "【不順】 順序が逆転した危うさ。目先の誘惑に負けず、筋を通しましょう。"},
-            ("雷","火"): {"name": "55.雷火豊", "desc": "【豊饒】 盛大な成果。輝かしい時ですが、陰りへの備えも忘れずに。"},
-            ("火","山"): {"name": "56.火山旅", "desc": "【孤独】 不安定な旅の空。謙虚に振る舞い、周囲の助けを借りて進みましょう。"},
-            ("風","風"): {"name": "57.巽為風", "desc": "【追従】 風のように柔軟に。強いリーダーに従い、細やかな気配りをして吉。"},
-            ("澤","澤"): {"name": "58.兌為澤", "desc": "【悦び】 笑顔と会話。楽しさを共有する時ですが、言葉の乱れに注意。"},
-            ("風","水"): {"name": "59.風水渙", "desc": "【霧散】 悩みや困難が吹き飛ぶ。滞っていたものが流れ出し、再出発へ。"},
-            ("水","澤"): {"name": "60.水澤節", "desc": "【節度】 ほどほどが大切。規律を守りつつ、自分を縛りすぎないバランスを。"},
-            ("風","澤"): {"name": "61.風澤中孚", "desc": "【誠実】 まごころが通じる。目に見えない信頼関係が、大きな力となります。"},
-            ("雷","山"): {"name": "62.雷山小過", "desc": "【謙遜】 小さな事に集中。背伸びせず、身近な幸せを大切にする時期です。"},
-            ("水","火"): {"name": "63.水火既済", "desc": "【完成】 物事が整った状態。維持が難しいため、崩れないよう注意深く。"},
-            ("火","水"): {"name": "64.火水未済", "desc": "【未完】 未完成の希望。最後の一押しを慎重にすれば、成功は目前です。"}
-        }
+        # --- UI レイアウト ---
+        # タイトル
+        self.label_title = tk.Label(
+            root, text="★ 易経・六十四卦 鑑定 ★", 
+            font=("MS Gothic", 20, "bold"), bg="#1a1a2e", fg="#00d2ff"
+        )
+        self.label_title.pack(pady=15)
 
-        # UI
-        self.label_title = tk.Label(root, text="★ 易経・六十四卦 占占 ★", font=("MS Gothic", 20, "bold"), bg="#1a1a2e", fg="#00d2ff")
-        self.label_title.pack(pady=20)
+        # 卦（棒）の描画エリア
+        self.canvas = tk.Canvas(
+            root, width=220, height=180, bg="#1a1a2e", highlightthickness=0
+        )
+        self.canvas.pack(pady=5)
 
-        self.canvas = tk.Canvas(root, width=220, height=200, bg="#1a1a2e", highlightthickness=0)
-        self.canvas.pack(pady=10)
-
-        self.label_name = tk.Label(root, text="", font=("MS Gothic", 18, "bold"), bg="#1a1a2e", fg="#ffd700")
+        # 卦名
+        self.label_name = tk.Label(
+            root, text="", font=("MS Gothic", 22, "bold"), 
+            bg="#1a1a2e", fg="#ffd700"
+        )
         self.label_name.pack(pady=5)
 
-        self.label_desc = tk.Label(root, text="精神を統一して「得卦」を押してください", font=("MS Gothic", 12), bg="#1a1a2e", fg="#e0e0e0", wraplength=400, justify="center")
-        self.label_desc.pack(pady=20)
+        # 卦辞（伝統的な一文）
+        self.label_kaji = tk.Label(
+            root, text="", font=("MS Gothic", 12, "italic"), 
+            bg="#1a1a2e", fg="#a0e4cb", wraplength=400
+        )
+        self.label_kaji.pack(pady=5)
 
-        self.btn_draw = tk.Button(root, text="得 卦", command=self.perform_divination, font=("MS Gothic", 16, "bold"), bg="#ff4b2b", fg="white", activebackground="#ff416c", cursor="hand2", padx=60, pady=10)
-        self.btn_draw.pack(side="bottom", pady=40)
+        # --- 各運勢の表示エリア ---
+        # 全体運（強調表示）
+        self.label_un = tk.Label(
+            root, text="心を落ち着けて「得卦」を押してください", 
+            font=("MS Gothic", 12, "bold"), bg="#1a1a2e", fg="#ffffff", 
+            wraplength=400, justify="center"
+        )
+        self.label_un.pack(pady=15)
+
+        # 結婚運
+        self.label_love = tk.Label(
+            root, text="", font=("MS Gothic", 11), 
+            bg="#1a1a2e", fg="#ff9ff3", wraplength=400
+        )
+        self.label_love.pack(pady=5)
+
+        # 財運
+        self.label_money = tk.Label(
+            root, text="", font=("MS Gothic", 11), 
+            bg="#1a1a2e", fg="#feca57", wraplength=400
+        )
+        self.label_money.pack(pady=5)
+
+        # 実行ボタン
+        self.btn_draw = tk.Button(
+            root, text="得 卦", command=self.perform_divination, 
+            font=("MS Gothic", 16, "bold"), bg="#ff4b2b", fg="white", 
+            activebackground="#ff416c", cursor="hand2", padx=60, pady=10
+        )
+        self.btn_draw.pack(side="bottom", pady=30)
 
     def draw_line(self, y_pos, is_yang):
+        """陰陽の棒を描画する"""
         color = "#00d2ff" if is_yang else "#ff4b2b"
         if is_yang:
             self.canvas.create_rectangle(40, y_pos, 180, y_pos+15, fill=color, outline="")
@@ -107,20 +91,44 @@ class IchingApp:
             self.canvas.create_rectangle(120, y_pos, 180, y_pos+15, fill=color, outline="")
 
     def perform_divination(self):
+        """占い実行"""
+        if not self.hexagrams:
+            self.label_un.config(text="エラー: iching_data.py が見つかりません。")
+            return
+
         self.canvas.delete("all")
         lines = []
+        
+        # 下から上へ生成
         for i in range(6):
             res = random.choice([0, 1])
             lines.append(res)
-            y_pos = 170 - (i * 28)
+            y_pos = 150 - (i * 25)
             self.draw_line(y_pos, res == 1)
 
-        inner = self.trigrams.get(tuple(lines[0:3]))
-        outer = self.trigrams.get(tuple(lines[3:6]))
-        result = self.hexagrams.get((outer, inner), {"name": "エラー", "desc": "データが見つかりません。"})
+        # 内卦と外卦の判定
+        inner_tuple = tuple(lines[0:3])
+        outer_tuple = tuple(lines[3:6])
+        inner_name = self.trigrams.get(inner_tuple)
+        outer_name = self.trigrams.get(outer_tuple)
         
-        self.label_name.config(text=result["name"])
-        self.label_desc.config(text=result["desc"])
+        # データ取得
+        result = self.hexagrams.get((outer_name, inner_name))
+        
+        if result:
+            self.label_name.config(text=result["name"])
+            self.label_kaji.config(text=result.get("kaji", ""))
+            self.label_un.config(text=result.get("un", ""))
+            
+            # 結婚運と財運のテキストを更新
+            love_text = f"【結婚運】 {result.get('love', '')}" if result.get('love') else ""
+            money_text = f"【財運】 {result.get('money', '')}" if result.get('money') else ""
+            
+            self.label_love.config(text=love_text)
+            self.label_money.config(text=money_text)
+        else:
+            self.label_name.config(text="不明な卦")
+            self.label_un.config(text="組み合わせが見つかりませんでした。")
 
 if __name__ == "__main__":
     root = tk.Tk()
